@@ -1,12 +1,19 @@
+cmake_minimum_required(VERSION 3.14)
 project(wescene-renderer)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(PkgConfig REQUIRED)
 
 
 include_directories(SYSTEM third_party)
+
+link_libraries(Eigen3::Eigen)
+
 add_subdirectory(third_party)
 add_subdirectory(src)
-
 
 if(BUILD_QML)
     find_package(Qt${QT_MAJOR_VERSION} COMPONENTS Gui Quick Qml REQUIRED)

@@ -18,12 +18,12 @@
 #define MA_NO_COREAUDIO
 #define MA_NO_ENCODING
 #define STB_VORBIS_HEADER_ONLY
-#include <miniaudio/stb_vorbis.c> /* Enables Vorbis decoding. */
+#include <miniaudio/extras/stb_vorbis.c> /* Enables Vorbis decoding. */
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio/miniaudio.h>
 /* stb_vorbis implementation must come after the implementation of miniaudio. */
 #undef STB_VORBIS_HEADER_ONLY
-#include <miniaudio/stb_vorbis.c> /* Enables Vorbis decoding. */
+#include <miniaudio/extras/stb_vorbis.c> /* Enables Vorbis decoding. */
 
 namespace miniaudio
 {
@@ -135,7 +135,7 @@ public:
         Start();
         return true;
     }
-    bool IsInited() const { return m_device.state != ma_device_state_uninitialized; }
+    bool IsInited() const { return m_device.state.value != ma_device_state_uninitialized; }
     void UnInit() {
         if (IsInited()) {
             LOG_INFO("uninit sound device");

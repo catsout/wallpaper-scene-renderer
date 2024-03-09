@@ -1,11 +1,21 @@
-
 add_subdirectory(glad)
 
-add_subdirectory(SPIRV-Reflect)
+add_library (eigen INTERFACE)
+add_library (Eigen3::Eigen ALIAS eigen)
+target_include_directories(eigen INTERFACE Eigen)
 
-SET(SKIP_GLSLANG_INSTALL ON CACHE BOOL "")
-SET(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "")
-SET(ENABLE_SPVREMAPPER OFF CACHE BOOL "")
-SET(ENABLE_GLSLANG_JS OFF CACHE BOOL "")
-SET(NABLE_HLSL ON CACHE BOOL "")
-add_subdirectory(glslang)
+add_subdirectory(nlohmann EXCLUDE_FROM_ALL)
+
+set(SPIRV_REFLECT_STATIC_LIB ON)
+set(SPIRV_REFLECT_EXECUTABLE OFF)
+set(SPIRV_REFLECT_BUILD_TESTS OFF)
+set(SPIRV_REFLECT_EXAMPLES OFF)
+add_subdirectory(SPIRV-Reflect EXCLUDE_FROM_ALL)
+
+set(SKIP_GLSLANG_INSTALL ON)
+set(ENABLE_GLSLANG_BINARIES OFF)
+set(ENABLE_SPVREMAPPER OFF)
+set(ENABLE_GLSLANG_JS OFF)
+set(ENABLE_HLSL OFF)
+set(ENABLE_OPT OFF)
+add_subdirectory(glslang EXCLUDE_FROM_ALL)
