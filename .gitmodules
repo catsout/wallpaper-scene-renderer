@@ -9,6 +9,7 @@
 [submodule "third_party/SPIRV-Reflect"]
 	path = third_party/SPIRV-Reflect
 	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+	shallow = true
 [submodule "third_party/Eigen"]
 	path = third_party/Eigen
 	url = https://gitlab.com/libeigen/eigen.git
