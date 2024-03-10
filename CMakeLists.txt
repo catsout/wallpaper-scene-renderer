@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-cmake_policy(SET CMP0077 NEW)
-
 find_package(PkgConfig REQUIRED)
 
 
@@ -18,7 +16,7 @@ add_subdirectory(third_party)
 add_subdirectory(src)
 
 if(BUILD_QML)
-    find_package(Qt${QT_MAJOR_VERSION} COMPONENTS Gui Quick Qml REQUIRED)
+    find_package(Qt6 COMPONENTS Gui Quick Qml REQUIRED)
 
     set(CMAKE_AUTOMOC ON) 
     set(CMAKE_AUTORCC ON) 
