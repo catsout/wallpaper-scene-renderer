@@ -19,7 +19,7 @@ vulkan_wrapper.cpp
 target_link_libraries(${LIB_NAME}
 PUBLIC
 	glslang
-    spirv-reflect
+    spirv-reflect-static
 	${Vulkan_LIBRARIES}
     wpScene
 PRIVATE

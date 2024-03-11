@@ -1,15 +1,22 @@
+cmake_minimum_required(VERSION 3.14)
 project(wescene-renderer)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(PkgConfig REQUIRED)
 
 
 include_directories(SYSTEM third_party)
+
+link_libraries(Eigen3::Eigen)
+
 add_subdirectory(third_party)
 add_subdirectory(src)
 
-
 if(BUILD_QML)
-    find_package(Qt5 COMPONENTS Gui Quick Qml REQUIRED)
+    find_package(Qt6 COMPONENTS Gui Quick Qml REQUIRED)
 
     set(CMAKE_AUTOMOC ON) 
     set(CMAKE_AUTORCC ON) 
@@ -22,8 +29,8 @@ if(BUILD_QML)
     )
     target_link_libraries(${PROJECT_NAME}-qml
     PUBLIC
-        Qt5::Quick
-        Qt5::Gui
+        Qt::Quick
+        Qt::Gui
         glad
         ${PROJECT_NAME}
     )
