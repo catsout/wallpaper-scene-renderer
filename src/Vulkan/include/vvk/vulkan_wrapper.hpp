@@ -36,7 +36,7 @@ const char* ToString(VkColorSpaceKHR color) noexcept;
 #define VVK_CHECK_ACT(act, f)                                     \
     {                                                             \
         VkResult _res = (f);                                      \
-        if (_res != VK_SUCCESS) {                                 \
+        if (_res != VK_SUCCESS && _res != VK_SUBOPTIMAL_KHR) {    \
             LOG_ERROR("VkResult is \"%s\"", vvk::ToString(_res)); \
             assert(_res == VK_SUCCESS);                           \
             { act; };                                             \

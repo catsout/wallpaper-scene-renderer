@@ -616,6 +616,8 @@ const char* ToString(VkResult result) noexcept {
         X(ERROR_NATIVE_WINDOW_IN_USE_KHR)
         // Provided by VK_EXT_debug_report
         X(ERROR_VALIDATION_FAILED_EXT)
+        // Provided by VK_KHR_swapchain
+        X(SUBOPTIMAL_KHR)
 
         default:
         return "VK_COLOR_SPACE_UNKNOWN";
