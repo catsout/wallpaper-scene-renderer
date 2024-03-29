@@ -620,7 +620,7 @@ const char* ToString(VkResult result) noexcept {
         X(SUBOPTIMAL_KHR)
 
         default:
-        return "VK_COLOR_SPACE_UNKNOWN";
+        return "VK_RESULT_UNKNOWN";
     }
     #undef X
 }
