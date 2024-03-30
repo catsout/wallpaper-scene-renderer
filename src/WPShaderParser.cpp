@@ -283,6 +283,12 @@ inline std::string Preprocessor(const std::string& in_src, ShaderType type, cons
 
     std::string src = wallpaper::WPShaderParser::PreShaderHeader(in_src, combos, type);
 
+    // workaround #require directive
+    {
+        std::regex re_require("(^|\r?\n)#require (.+)(\r?\n)");
+        src = std::regex_replace(src, re_require, "$1//#require $2$3");
+    }
+
     glslang::TShader::ForbidIncluder includer;
     glslang::TShader                 shader(ToGLSL(type));
     const EShMessages emsg { (EShMessages)(EShMsgDefault | EShMsgSpvRules | EShMsgRelaxedErrors |
