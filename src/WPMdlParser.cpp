@@ -29,6 +29,12 @@ WPPuppet::PlayMode ToPlayMode(std::string_view m) {
 constexpr uint32_t singile_vertex  = 4 * (3 + 4 + 4 + 2);
 constexpr uint32_t singile_indices = 2 * 3;
 
+constexpr uint32_t mdat_body_byte_length = 83;
+
+// alternative consts for alternative mdl format
+constexpr uint32_t alt_singile_vertex = 4 * (3 + 4 + 4 + 2 + 7);
+constexpr uint32_t alt_format_vertex_size_herald_value = 0x0180000F;
+
 constexpr uint32_t singile_bone_frame = 4 * 9;
 
 bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
@@ -49,19 +55,36 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
     f.ReadInt32(); // unk, 1
 
     mdl.mat_json_file = f.ReadStr();
-    // 0
+    // 0    
     f.ReadInt32();
 
-    uint32_t vertex_size = f.ReadUint32();
-    if (vertex_size % singile_vertex != 0) {
+    bool alt_mdl_format = false;
+    uint32_t curr = f.ReadUint32();
+
+    // if the uint at the normal vertex size position is 0, then this file
+    // uses the alternative MDL format, therefore the actual vertex size is
+    // located after the herald value, and we'll need to account for other differences later on.
+    if(curr == 0){
+        alt_mdl_format = true;
+        while (curr != alt_format_vertex_size_herald_value){
+            curr = f.ReadUint32();
+        }
+        curr = f.ReadUint32();
+    }
+
+    uint32_t vertex_size = curr;
+    if (vertex_size % (alt_mdl_format? alt_singile_vertex : singile_vertex) != 0) {
         LOG_ERROR("unsupport mdl vertex size %d", vertex_size);
         return false;
     }
 
-    uint32_t vertex_num = vertex_size / singile_vertex;
+    // if using the alternative MDL format, vertexes contain 7 extra 32-bit chunks between
+    // position and blend indices
+    uint32_t vertex_num = vertex_size / (alt_mdl_format ? alt_singile_vertex : singile_vertex);
     mdl.vertexs.resize(vertex_num);
     for (auto& vert : mdl.vertexs) {
         for (auto& v : vert.position) v = f.ReadFloat();
+        if(alt_mdl_format) {for (int i = 0; i < 7; i++) f.ReadUint32();}
         for (auto& v : vert.blend_indices) v = f.ReadUint32();
         for (auto& v : vert.weight) v = f.ReadFloat();
         for (auto& v : vert.texcoord) v = f.ReadFloat();
@@ -154,51 +177,87 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
         }
     }
 
-    mdl.mdla = ReadMDLVesion(f);
-    if (mdl.mdla != 0) {
-        uint end_size = f.ReadUint32();
-        (void)end_size;
+    // sometimes there can be one or more MDAT sections containing attachments
+    // before the MDLA section, so we need to skip them
+    std::string mdType;
+    std::string mdVersion;
+    
+    do {
+        std::string mdPrefix = f.ReadStr();
 
-        uint anim_num = f.ReadUint32();
-        anims.resize(anim_num);
-        for (auto& anim : anims) {
-            anim.id = f.ReadInt32();
-            if (anim.id <= 0) {
-                LOG_ERROR("wrong anime id %d", anim.id);
-                return false;
+        mdType = mdPrefix.substr(0, 4);
+        mdVersion = mdPrefix.substr(4, 4);
+
+        if(mdType == "MDAT"){
+            int bytesToRead = mdat_body_byte_length;
+            for(int i = 0; i < bytesToRead; i++){
+                f.ReadUint8();
             }
-            f.ReadInt32();
-            anim.name   = f.ReadStr();
-            anim.mode   = ToPlayMode(f.ReadStr());
-            anim.fps    = f.ReadFloat();
-            anim.length = f.ReadInt32();
-            f.ReadInt32();
+        }
 
-            uint32_t b_num = f.ReadUint32();
-            anim.bframes_array.resize(b_num);
-            for (auto& bframes : anim.bframes_array) {
-                f.ReadInt32();
-                uint32_t byte_size = f.ReadUint32();
-                uint32_t num       = byte_size / singile_bone_frame;
-                if (byte_size % singile_bone_frame != 0) {
-                    LOG_ERROR("wrong bone frame size %d", byte_size);
+    } while (mdType == "MDAT");
+    
+
+    if(mdType == "MDLA" && mdVersion.length() > 0){
+        mdl.mdla = std::stoi(mdVersion);
+        if (mdl.mdla != 0) {
+            uint end_size = f.ReadUint32();
+            (void)end_size;
+
+            uint anim_num = f.ReadUint32();
+            anims.resize(anim_num);
+            for (auto& anim : anims) {
+                anim.id = f.ReadInt32();
+                if (anim.id <= 0) {
+                    LOG_ERROR("wrong anime id %d", anim.id);
                     return false;
                 }
-                bframes.frames.resize(num);
-                for (auto& frame : bframes.frames) {
-                    for (auto& v : frame.position) v = f.ReadFloat();
-                    for (auto& v : frame.angle) v = f.ReadFloat();
-                    for (auto& v : frame.scale) v = f.ReadFloat();
+                f.ReadInt32();
+                anim.name   = f.ReadStr();
+                anim.mode   = ToPlayMode(f.ReadStr());
+                anim.fps    = f.ReadFloat();
+                anim.length = f.ReadInt32();
+                f.ReadInt32();
+
+                uint32_t b_num = f.ReadUint32();
+                anim.bframes_array.resize(b_num);
+                for (auto& bframes : anim.bframes_array) {
+                    f.ReadInt32();
+                    uint32_t byte_size = f.ReadUint32();
+                    uint32_t num       = byte_size / singile_bone_frame;
+                    if (byte_size % singile_bone_frame != 0) {
+                        LOG_ERROR("wrong bone frame size %d", byte_size);
+                        return false;
+                    }
+                    bframes.frames.resize(num);
+                    for (auto& frame : bframes.frames) {
+                        for (auto& v : frame.position) v = f.ReadFloat();
+                        for (auto& v : frame.angle) v = f.ReadFloat();
+                        for (auto& v : frame.scale) v = f.ReadFloat();
+                    }
                 }
-            }
-            uint32_t unk_extra_uint = f.ReadUint32();
-            for (uint i = 0; i < unk_extra_uint; i++) {
-                f.ReadFloat();
-                // data is like: {"$$hashKey":"object:2110","frame":1,"name":"random_anim"}
-                std::string unk_extra = f.ReadStr();
+                
+                // in the alternative MDL format there are an extra 34 bytes
+                // between animation definitions
+                if(alt_mdl_format)
+                {
+                    int bytesToRead = 34;
+                    for(int i = 0; i < bytesToRead; i++){
+                        f.ReadUint8();
+                    }
+                }
+                else{
+                    uint32_t unk_extra_uint = f.ReadUint32();
+                    for (uint i = 0; i < unk_extra_uint; i++) {
+                        f.ReadFloat();
+                        // data is like: {"$$hashKey":"object:2110","frame":1,"name":"random_anim"}
+                        std::string unk_extra = f.ReadStr();
+                    }
+                }
             }
         }
     }
+    
     mdl.puppet->prepared();
 
     LOG_INFO("read puppet: mdlv: %d, nmdls: %d, mdla: %d, bones: %d, anims: %d",
