@@ -110,7 +110,8 @@ private:
         operator bool() const noexcept { return anim != nullptr; };
     };
 
-    double m_global_blend { 1.0f };
+    double m_global_blend { 1.0 };
+    double m_total_blend { 0.0 };
 
     std::vector<Layer>        m_layers;
     std::shared_ptr<WPPuppet> m_puppet;
