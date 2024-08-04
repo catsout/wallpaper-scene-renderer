@@ -581,6 +581,9 @@ void ParseImageObj(ParseContext& context, wpscene::WPImageObject& img_obj) {
             LOG_ERROR("parse puppet failed: %s", wpimgobj.puppet.c_str());
             return;
         }
+        if (puppet->puppet->bones.size() == 0){
+            puppet = nullptr;
+        }
     }
 
     // wpimgobj.origin[1] = context.ortho_h - wpimgobj.origin[1];
@@ -1149,8 +1152,8 @@ std::shared_ptr<Scene> WPSceneParser::Parse(std::string_view scene_id, const std
 
     for (WPObjectVar& obj : wp_objs) {
         std::visit(visitor::overload {
-                       [&context](wpscene::WPImageObject& obj) {
-                           ParseImageObj(context, obj);
+                       [&context](wpscene::WPImageObject& obj) {                           
+                            ParseImageObj(context, obj);
                        },
                        [&context](wpscene::WPParticleObject& obj) {
                            ParseParticleObj(context, obj);
