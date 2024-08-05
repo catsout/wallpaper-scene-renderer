@@ -179,23 +179,26 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
 
     // sometimes there can be one or more MDAT sections containing attachments
     // before the MDLA section, so we need to skip them
-    std::string mdType;
+    std::string mdType = "";
     std::string mdVersion;
     
     do {
         std::string mdPrefix = f.ReadStr();
 
-        mdType = mdPrefix.substr(0, 4);
-        mdVersion = mdPrefix.substr(4, 4);
+        // sometimes there can be other garbage in this gap, so we need to 
+        // skip over that as well
+        if(mdPrefix.length() == 8){
+            mdType = mdPrefix.substr(0, 4);
+            mdVersion = mdPrefix.substr(4, 4);
 
-        if(mdType == "MDAT"){
-            int bytesToRead = mdat_body_byte_length;
-            for(int i = 0; i < bytesToRead; i++){
-                f.ReadUint8();
+            if(mdType == "MDAT"){
+                int bytesToRead = mdat_body_byte_length;
+                for(int i = 0; i < bytesToRead; i++){
+                    f.ReadUint8();
+                }
             }
         }
-
-    } while (mdType == "MDAT");
+    } while (mdType != "MDLA");
     
 
     if(mdType == "MDLA" && mdVersion.length() > 0){
@@ -207,7 +210,12 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
             uint anim_num = f.ReadUint32();
             anims.resize(anim_num);
             for (auto& anim : anims) {
-                anim.id = f.ReadInt32();
+                // there can be a variable number of 32-bit 0s between animations
+                anim.id = 0;
+                while(anim.id == 0){
+                    anim.id = f.ReadInt32();
+                }
+    
                 if (anim.id <= 0) {
                     LOG_ERROR("wrong anime id %d", anim.id);
                     return false;
@@ -237,14 +245,14 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
                     }
                 }
                 
-                // in the alternative MDL format there are an extra 34 bytes
-                // between animation definitions
+                // in the alternative MDL format there are 2 empty bytes followed
+                // by a variable number of 32-bit 0s between animations. We'll read
+                // the two bytes now so that the cursor is aligned to read through the
+                // 32-bit 0s in the next iteration
                 if(alt_mdl_format)
                 {
-                    int bytesToRead = 34;
-                    for(int i = 0; i < bytesToRead; i++){
-                        f.ReadUint8();
-                    }
+                    f.ReadUint8();
+                    f.ReadUint8();    
                 }
                 else{
                     uint32_t unk_extra_uint = f.ReadUint32();

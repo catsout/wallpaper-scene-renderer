@@ -579,9 +579,10 @@ void ParseImageObj(ParseContext& context, wpscene::WPImageObject& img_obj) {
         puppet = std::make_unique<WPMdl>();
         if (! WPMdlParser::Parse(wpimgobj.puppet, vfs, *puppet)) {
             LOG_ERROR("parse puppet failed: %s", wpimgobj.puppet.c_str());
-            return;
+            puppet = nullptr;
         }
-        if (puppet->puppet->bones.size() == 0){
+        else if (puppet->puppet->bones.size() == 0){
+            LOG_ERROR("puppet has no bones: %s", wpimgobj.puppet.c_str());
             puppet = nullptr;
         }
     }
