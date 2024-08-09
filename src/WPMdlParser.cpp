@@ -28,6 +28,7 @@ WPPuppet::PlayMode ToPlayMode(std::string_view m) {
 // bytes * size
 constexpr uint32_t singile_vertex  = 4 * (3 + 4 + 4 + 2);
 constexpr uint32_t singile_indices = 2 * 3;
+constexpr uint32_t std_format_vertex_size_herald_value = 0x01800009;
 
 constexpr uint32_t mdat_body_byte_length = 83;
 
@@ -69,6 +70,9 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
         while (curr != alt_format_vertex_size_herald_value){
             curr = f.ReadUint32();
         }
+        curr = f.ReadUint32();
+    }
+    else if(curr == std_format_vertex_size_herald_value){
         curr = f.ReadUint32();
     }
 
@@ -222,6 +226,9 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
                 }
                 f.ReadInt32();
                 anim.name   = f.ReadStr();
+                if(anim.name.empty()){
+                    anim.name = f.ReadStr();
+                }
                 anim.mode   = ToPlayMode(f.ReadStr());
                 anim.fps    = f.ReadFloat();
                 anim.length = f.ReadInt32();
