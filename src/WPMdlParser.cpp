@@ -30,7 +30,8 @@ constexpr uint32_t singile_vertex  = 4 * (3 + 4 + 4 + 2);
 constexpr uint32_t singile_indices = 2 * 3;
 constexpr uint32_t std_format_vertex_size_herald_value = 0x01800009;
 
-constexpr uint32_t mdat_body_byte_length = 83;
+// number of bytes in an MDAT attachment after the attachment name
+constexpr uint32_t mdat_attachment_data_byte_length = 64;
 
 // alternative consts for alternative mdl format
 constexpr uint32_t alt_singile_vertex = 4 * (3 + 4 + 4 + 2 + 7);
@@ -181,8 +182,8 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
         }
     }
 
-    // sometimes there can be one or more MDAT sections containing attachments
-    // before the MDLA section, so we need to skip them
+    // sometimes there can be one or more zero bytes and/or MDAT sections containing
+    // attachments before the MDLA section, so we need to skip them
     std::string mdType = "";
     std::string mdVersion;
     
@@ -196,9 +197,17 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
             mdVersion = mdPrefix.substr(4, 4);
 
             if(mdType == "MDAT"){
-                int bytesToRead = mdat_body_byte_length;
-                for(int i = 0; i < bytesToRead; i++){
-                    f.ReadUint8();
+                f.ReadUint32(); // skip 4 bytes
+                uint32_t num_attachments = f.ReadUint16(); // number of attachments in the MDAT section
+
+                for(int i = 0; i < num_attachments; i++){
+                    f.ReadUint16(); // skip 2 bytes
+                    std::string attachment_name = f.ReadStr(); // attachment name
+                    int bytesToRead = mdat_attachment_data_byte_length;
+                    for(int j = 0; j < bytesToRead; j++){
+                        f.ReadUint8();
+                    }
+
                 }
             }
         }
