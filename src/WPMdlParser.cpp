@@ -270,6 +270,11 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
                     f.ReadUint8();
                     f.ReadUint8();    
                 }
+                else if(mdl.mdla == 3){
+                    // In MDLA version 3 there is an extra 8-bit zero between animations.
+                    // This will cause the parser to be misaligned moving forward if we don't handle it here.
+                    f.ReadUint8();
+                }
                 else{
                     uint32_t unk_extra_uint = f.ReadUint32();
                     for (uint i = 0; i < unk_extra_uint; i++) {
