@@ -579,7 +579,11 @@ void ParseImageObj(ParseContext& context, wpscene::WPImageObject& img_obj) {
         puppet = std::make_unique<WPMdl>();
         if (! WPMdlParser::Parse(wpimgobj.puppet, vfs, *puppet)) {
             LOG_ERROR("parse puppet failed: %s", wpimgobj.puppet.c_str());
-            return;
+            puppet = nullptr;
+        }
+        else if (puppet->puppet->bones.size() == 0){
+            LOG_ERROR("puppet has no bones: %s", wpimgobj.puppet.c_str());
+            puppet = nullptr;
         }
     }
 
@@ -1149,8 +1153,8 @@ std::shared_ptr<Scene> WPSceneParser::Parse(std::string_view scene_id, const std
 
     for (WPObjectVar& obj : wp_objs) {
         std::visit(visitor::overload {
-                       [&context](wpscene::WPImageObject& obj) {
-                           ParseImageObj(context, obj);
+                       [&context](wpscene::WPImageObject& obj) {                           
+                            ParseImageObj(context, obj);
                        },
                        [&context](wpscene::WPParticleObject& obj) {
                            ParseParticleObj(context, obj);
