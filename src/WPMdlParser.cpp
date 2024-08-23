@@ -28,8 +28,10 @@ WPPuppet::PlayMode ToPlayMode(std::string_view m) {
 // bytes * size
 constexpr uint32_t singile_vertex  = 4 * (3 + 4 + 4 + 2);
 constexpr uint32_t singile_indices = 2 * 3;
+constexpr uint32_t std_format_vertex_size_herald_value = 0x01800009;
 
-constexpr uint32_t mdat_body_byte_length = 83;
+// number of bytes in an MDAT attachment after the attachment name
+constexpr uint32_t mdat_attachment_data_byte_length = 64;
 
 // alternative consts for alternative mdl format
 constexpr uint32_t alt_singile_vertex = 4 * (3 + 4 + 4 + 2 + 7);
@@ -69,6 +71,9 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
         while (curr != alt_format_vertex_size_herald_value){
             curr = f.ReadUint32();
         }
+        curr = f.ReadUint32();
+    }
+    else if(curr == std_format_vertex_size_herald_value){
         curr = f.ReadUint32();
     }
 
@@ -177,8 +182,8 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
         }
     }
 
-    // sometimes there can be one or more MDAT sections containing attachments
-    // before the MDLA section, so we need to skip them
+    // sometimes there can be one or more zero bytes and/or MDAT sections containing
+    // attachments before the MDLA section, so we need to skip them
     std::string mdType = "";
     std::string mdVersion;
     
@@ -192,9 +197,17 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
             mdVersion = mdPrefix.substr(4, 4);
 
             if(mdType == "MDAT"){
-                int bytesToRead = mdat_body_byte_length;
-                for(int i = 0; i < bytesToRead; i++){
-                    f.ReadUint8();
+                f.ReadUint32(); // skip 4 bytes
+                uint32_t num_attachments = f.ReadUint16(); // number of attachments in the MDAT section
+
+                for(int i = 0; i < num_attachments; i++){
+                    f.ReadUint16(); // skip 2 bytes
+                    std::string attachment_name = f.ReadStr(); // attachment name
+                    int bytesToRead = mdat_attachment_data_byte_length;
+                    for(int j = 0; j < bytesToRead; j++){
+                        f.ReadUint8();
+                    }
+
                 }
             }
         }
@@ -222,6 +235,9 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
                 }
                 f.ReadInt32();
                 anim.name   = f.ReadStr();
+                if(anim.name.empty()){
+                    anim.name = f.ReadStr();
+                }
                 anim.mode   = ToPlayMode(f.ReadStr());
                 anim.fps    = f.ReadFloat();
                 anim.length = f.ReadInt32();
@@ -253,6 +269,11 @@ bool WPMdlParser::Parse(std::string_view path, fs::VFS& vfs, WPMdl& mdl) {
                 {
                     f.ReadUint8();
                     f.ReadUint8();    
+                }
+                else if(mdl.mdla == 3){
+                    // In MDLA version 3 there is an extra 8-bit zero between animations.
+                    // This will cause the parser to be misaligned moving forward if we don't handle it here.
+                    f.ReadUint8();
                 }
                 else{
                     uint32_t unk_extra_uint = f.ReadUint32();

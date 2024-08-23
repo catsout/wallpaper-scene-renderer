@@ -4,6 +4,9 @@
 #include "WPMaterial.h"
 #include <vector>
 #include "WPPuppet.hpp"
+#include <unordered_set>
+#include <string>
+#include <filesystem>
 
 namespace wallpaper
 {
@@ -34,6 +37,9 @@ public:
 };
 
 class WPImageEffect {
+private:
+    static const std::unordered_set<std::string> BLACKLISTED_WORKSHOP_EFFECTS;
+    bool IsEffectBlacklisted(const std::string& filePath);
 public:
     bool                         FromJson(const nlohmann::json&, fs::VFS& vfs);
     bool                         FromFileJson(const nlohmann::json&, fs::VFS& vfs);

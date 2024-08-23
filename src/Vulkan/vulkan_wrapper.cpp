@@ -584,7 +584,7 @@ EnumerateInstanceLayerProperties(const InstanceDispatch& dld) {
 
 // clang-format off
 const char* ToString(VkResult result) noexcept {
-    #define X(str) case VkResult::VK_##str: return "VK_##str";
+    #define X(str) case VkResult::VK_##str: return "VK_" #str;
     switch (result) {
         X(SUCCESS)
         X(NOT_READY)

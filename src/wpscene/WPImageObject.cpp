@@ -24,10 +24,36 @@ bool WPEffectFbo::FromJson(const nlohmann::json& json) {
     return true;
 }
 
+// Define and initialize the static property
+const std::unordered_set<std::string> WPImageEffect::BLACKLISTED_WORKSHOP_EFFECTS = 
+{
+    "2799421411" // Audio Responsive Oscilloscope   --  causes vulcan deadlock
+};
+
+
+bool WPImageEffect::IsEffectBlacklisted(const std::string& filePath) {
+    
+    std::filesystem::path path(filePath);
+    // Check if the path has a parent path
+    if (path.has_parent_path()) {
+        path = path.parent_path();
+        if(path.has_parent_path()) {
+            std::string effectId = path.parent_path().filename().string();
+            std::string parentPath = path.parent_path().string();
+            return WPImageEffect::BLACKLISTED_WORKSHOP_EFFECTS.find(effectId) != WPImageEffect::BLACKLISTED_WORKSHOP_EFFECTS.end();
+        }
+    }
+    return false;
+}
+    
 bool WPImageEffect::FromJson(const nlohmann::json& json, fs::VFS& vfs) {
     std::string filePath;
     GET_JSON_NAME_VALUE(json, "file", filePath);
     GET_JSON_NAME_VALUE_NOWARN(json, "visible", visible);
+    if(this->IsEffectBlacklisted(filePath)) {
+        //hide blacklisted effects
+        visible = false;
+    }
 	GET_JSON_NAME_VALUE_NOWARN(json, "id", id);
     nlohmann::json jEffect;
     if(!PARSE_JSON(fs::GetFileContent(vfs, "/assets/" + filePath), jEffect))
