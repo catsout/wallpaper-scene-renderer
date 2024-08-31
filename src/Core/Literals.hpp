@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cuchar>
+#include <cstddef>
 
 namespace wallpaper
 {
