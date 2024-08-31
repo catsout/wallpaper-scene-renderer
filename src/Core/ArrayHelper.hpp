@@ -14,7 +14,7 @@ std::array<T, std::tuple_size<Tarray>::value> array_cast(const Tarray& array) no
     return res;
 }
 
-template<typename S, typename TFunc, typename TR = typename std::result_of<TFunc(S)>::type>
+template<typename S, typename TFunc, typename TR = std::invoke_result_t<TFunc, S>>
 std::vector<TR> transform(std::span<const S> src, TFunc&& func) {
     std::vector<TR> dst(std::size(src));
     std::transform(std::begin(src), std::end(src), std::begin(dst), func);
