@@ -216,7 +216,7 @@ QSGNode* SceneObject::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*) {
             return (QSGTexture*)nullptr;
         });
         if (node->initGl()) {
-            node->initVulkan(width(), height());
+            node->initVulkan(width()*window()->devicePixelRatio(), height()*window()->devicePixelRatio());
 
             connect(
                 node, &TextureNode::redraw, window(), &QQuickWindow::update, Qt::QueuedConnection);
