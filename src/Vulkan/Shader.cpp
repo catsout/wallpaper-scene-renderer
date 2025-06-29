@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <glslang/Include/Types.h>
+#include <glslang/MachineIndependent/localintermediate.h>
 #include <glslang/MachineIndependent/iomapper.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include "Spv.hpp"
