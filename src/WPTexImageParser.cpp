@@ -142,8 +142,7 @@ std::shared_ptr<Image> WPTexImageParser::Parse(const std::string& name) {
         auto& img_slot = img.slots[i_image];
         auto& mipmaps  = img_slot.mipmaps;
 
-        i32   _mipmap_count = file.ReadInt32();
-        usize mipmap_count  = (usize)_mipmap_count;
+        usize mipmap_count = (usize)std::max<i32>(file.ReadInt32(), 0);
         mipmaps.resize(mipmap_count);
         // load image
         for (usize i_mipmap = 0; i_mipmap < mipmap_count; i_mipmap++) {
