@@ -311,12 +311,20 @@ void SceneObject::setAcceptHover(bool value) { setAcceptHoverEvents(value); }
 
 void SceneObject::mousePressEvent(QMouseEvent* event) {}
 void SceneObject::mouseMoveEvent(QMouseEvent* event) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    auto pos = event->position();
+#else
     auto pos = event->localPos();
+#endif
     m_scene->mouseInput(pos.x() / width(), pos.y() / height());
 }
 
 void SceneObject::hoverMoveEvent(QHoverEvent* event) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    auto pos = event->position();
+#else
     auto pos = event->posF();
+#endif
     m_scene->mouseInput(pos.x() / width(), pos.y() / height());
 }
 
