@@ -371,7 +371,7 @@ bool LoadMaterial(fs::VFS& vfs, const wpscene::WPMaterial& wpmat, Scene* pScene,
             }
             if ((pScene->textures.at(name)).isSprite) {
                 material.hasSprite = true;
-                const auto& f1     = texh.spriteAnim.GetCurFrame();
+const auto& f1     = texh.spriteAnim.GetCurFrame();
                 if (wpmat.shader == "genericparticle" || wpmat.shader == "genericropeparticle") {
                     pWPShaderInfo->combos["SPRITESHEET"] = "1";
                     pWPShaderInfo->combos["THICKFORMAT"] = "1";
@@ -985,13 +985,19 @@ void ParseParticleObj(ParseContext& context, wpscene::WPParticleObject& wppartob
         shaderInfo.combos["SPRITESHEETBLEND"] = "1";
     }
 
-    if (! LoadMaterial(vfs,
-                       particle_obj.material,
-                       context.scene.get(),
-                       spNode.get(),
-                       &material,
-                       &svData,
-                       &shaderInfo)) {
+    bool mat_ok = false;
+    try {
+        mat_ok = LoadMaterial(vfs,
+                              particle_obj.material,
+                              context.scene.get(),
+                              spNode.get(),
+                              &material,
+                              &svData,
+                              &shaderInfo);
+    } catch (const std::exception& e) {
+        LOG_ERROR("load particleobj '%s' material exception: %s", wppartobj.name.c_str(), e.what());
+    }
+    if (! mat_ok) {
         LOG_ERROR("load particleobj '%s' material faild", wppartobj.name.c_str());
         return;
     }
